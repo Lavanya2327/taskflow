@@ -24,3 +24,7 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+.task-input::placeholder {
+  color: #6b7280;
+  opacity: 1;
+}
