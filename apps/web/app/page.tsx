@@ -1,45 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabaseBrowser } from "./lib/supabase-browser";
 import {
   addTask as addTaskAction,
   updateTask as updateTaskAction,
   deleteTask as deleteTaskAction,
 } from "./actions";
-
-type Task = {
-  id: number;
-  title: string;
-  completed: boolean;
-  created_at: string;
-};
+import type { Task } from "@repo/common-types";
+import type { User } from "@supabase/supabase-js";
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   // Edit states
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
 
-  useEffect(() => {
-  const getUser = async () => {
-    const {
-      data: { user },
-    } = await supabaseBrowser.auth.getUser();
-
-    setUser(user);
-  };
-
-  getUser();
-}, []);
-
-
   // Fetch tasks
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     const { data, error } = await supabaseBrowser
       .from("tasks")
       .select("*")
@@ -52,42 +34,67 @@ export default function Home() {
     }
 
     setLoading(false);
-  };
+  }, []);
 
-  // Load tasks when page opens
-  // Load tasks after user is available
-useEffect(() => {
-  if (user) {
-    fetchTasks();
-  }
-}, [user]);
+  // Load user and then fetch tasks or redirect to login
+  useEffect(() => {
+    let cancelled = false;
+
+    const init = async () => {
+      const {
+        data: { user: currentUser },
+      } = await supabaseBrowser.auth.getUser();
+
+      if (!cancelled) {
+        if (currentUser) {
+          setUser(currentUser);
+          fetchTasks();
+        } else {
+          // Not logged in — redirect to login page
+          window.location.href = "/login";
+        }
+      }
+    };
+
+    init();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchTasks]);
+
+  // Logout function
+  const handleLogout = async () => {
+    await supabaseBrowser.auth.signOut();
+    window.location.href = "/login";
+  };
 
   // Add a new task
   const addTask = async () => {
-  if (!title.trim()) return;
+    if (!title.trim()) return;
 
-  const result = await addTaskAction(title.trim());
+    const result = await addTaskAction(title.trim());
 
-  if (result?.error) {
-    console.error(result.error);
-    return;
-  }
+    if (result?.error) {
+      console.error(result.error);
+      return;
+    }
 
-  setTitle("");
-  fetchTasks();
-};
+    setTitle("");
+    fetchTasks();
+  };
 
   // Toggle task completion
   const toggleTask = async (id: number, completed: boolean) => {
-  const result = await updateTaskAction(id, undefined, !completed);
+    const result = await updateTaskAction(id, undefined, !completed);
 
-  if (result?.error) {
-    console.error("Error updating task:", result.error);
-    return;
-  }
+    if (result?.error) {
+      console.error("Error updating task:", result.error);
+      return;
+    }
 
-  fetchTasks();
-};
+    fetchTasks();
+  };
 
   // Start editing a task
   const startEditing = (task: Task) => {
@@ -97,31 +104,49 @@ useEffect(() => {
 
   // Update task title
   const updateTask = async (id: number) => {
-  if (!editingTitle.trim()) return;
+    if (!editingTitle.trim()) return;
 
-  const result = await updateTaskAction(id, editingTitle.trim());
+    const result = await updateTaskAction(id, editingTitle.trim());
 
-  if (result?.error) {
-    console.error("Error updating task:", result.error);
-    return;
-  }
+    if (result?.error) {
+      console.error("Error updating task:", result.error);
+      return;
+    }
 
-  setEditingId(null);
-  setEditingTitle("");
-  fetchTasks();
-};
+    setEditingId(null);
+    setEditingTitle("");
+    fetchTasks();
+  };
 
   // Delete task
   const deleteTask = async (id: number) => {
-  const result = await deleteTaskAction(id);
+    const result = await deleteTaskAction(id);
 
-  if (result?.error) {
-    console.error("Error deleting task:", result.error);
-    return;
+    if (result?.error) {
+      console.error("Error deleting task:", result.error);
+      return;
+    }
+
+    fetchTasks();
+  };
+
+  // Show loading while checking auth
+  if (!user) {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          background: "#f5f7fb",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "Arial, sans-serif",
+        }}
+      >
+        <p style={{ color: "#4b5563", fontSize: "18px" }}>Loading...</p>
+      </main>
+    );
   }
-
-  fetchTasks();
-};
 
   return (
     <main
@@ -142,16 +167,40 @@ useEffect(() => {
           boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
         }}
       >
-        <h1
+        <div
           style={{
-            fontSize: "38px",
-            fontWeight: "700",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             marginBottom: "8px",
-            color: "#1f2937",
           }}
         >
-          TaskFlow
-        </h1>
+          <h1
+            style={{
+              fontSize: "38px",
+              fontWeight: "700",
+              color: "#1f2937",
+            }}
+          >
+            TaskFlow
+          </h1>
+
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: "8px 16px",
+              background: "#ef4444",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontWeight: "600",
+              fontSize: "14px",
+            }}
+          >
+            Logout
+          </button>
+        </div>
 
         <p
           style={{
@@ -362,5 +411,3 @@ useEffect(() => {
     </main>
   );
 }
-
-  

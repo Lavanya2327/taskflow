@@ -1,13 +1,9 @@
 "use server";
 
-import { z } from "zod";
+import { taskSchema } from "@repo/common-types";
 import { createClient } from "@/app/lib/supabase-server";
 import { revalidatePath } from "next/cache";
 
-
-const taskSchema = z.object({
-  title: z.string().trim().min(1, "Task title cannot be empty"),
-});
 
 export async function addTask(title: string) {
   const validated = taskSchema.safeParse({ title });
