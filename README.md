@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TaskFlow — Task Manager Application
+
+A full-stack, monorepo Task Manager application built with **Next.js**, **Supabase**, and **Turborepo**.
+
+## Project Structure
+
+```
+taskflow/
+├── apps/
+│   └── web/          # Next.js frontend application
+├── packages/
+│   └── common-types/ # Shared TypeScript types
+├── .github/
+│   └── workflows/
+│       └── ci.yml    # CI pipeline for lint & type-check
+├── turbo.json        # Turborepo configuration
+└── pnpm-workspace.yaml
+```
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Package Manager**: pnpm (Monorepo with Turborepo)
+- **Styling**: Tailwind CSS v4
+- **Language**: TypeScript
+- **CI/CD**: GitHub Actions + Vercel
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Install dependencies
+pnpm install
+
+# Start the development server
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command            | Description                        |
+| ------------------ | ---------------------------------- |
+| `pnpm dev`         | Start the development server       |
+| `pnpm build`       | Build all packages and apps        |
+| `pnpm lint`        | Run ESLint across the monorepo     |
+| `pnpm check-types` | Run TypeScript type checking       |
+
+## CI/CD Pipeline
+
+This project uses **GitHub Actions** for Continuous Integration. On every pull request targeting `main`, the pipeline automatically:
+
+1. Checks out the code
+2. Sets up Node.js and enables pnpm
+3. Installs all dependencies
+4. Runs lint checks (`pnpm lint`)
+5. Runs type checks (`pnpm check-types`)
+
+## Deployment
+
+The application is deployed on **Vercel** with automatic deployments on push to `main`.
+
+### Environment Variables
+
+The following environment variables must be set in Vercel:
+
+- `NEXT_PUBLIC_SUPABASE_URL` — Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Your Supabase anonymous key
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Turborepo Documentation](https://turbo.build/repo/docs)
+- [Vercel Deployment](https://vercel.com/docs)
